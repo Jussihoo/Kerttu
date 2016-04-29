@@ -10,7 +10,7 @@ ToDo list:
 - create html page and socket connection between the node.js serverand the html page to receive the temperature data and log it to the console *DONE*
 - Implement a graph to plot the temperature *DONE*
 - Implement a nice visual display to show the measured temperature *DONE*
-- create an account on the AWS (Amazon cloud) and make the node.js server run there. This enables other persons to join the project and to display the data.
+- create an account on the AWS (Amazon cloud) and make the node.js server run there. This enables other persons to join the project and to display the data. *DONE*
 - implement storage of the data into the database in the node.js server
 - active humidity sensor and implement data processing in the node.js server
 - implement processing of humidity data and graph plotting in the html
