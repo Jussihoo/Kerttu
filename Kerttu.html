@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html> 
+<body>
+
+<h1><center>Weather Station Kerttu</center></h1>
+
+<script src="node_modules/socket.io/node_modules/socket.io-client/socket.io.js"></script>
+<script src="node_modules/chart.js/dist/Chart.bundle.js"></script>
+<script src="http://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+
+<script> var socket = io("http://localhost:8080"); 
+  socket.on('PushData', function (data) {
+            console.log("data from socket" + data); // remove this
+            ShowMeasuredTemp(data);
+});
+            
+</script> 
+
+<script>
+var client = new XMLHttpRequest(); // not needed yet
+
+function ShowMeasuredTemp(inputData) { 
+  var data = JSON.parse(inputData);
+  var temperature = data.temp;
+  var timestamp   = data.time;
+  document.getElementById("temp").innerHTML = temperature;
+  
+  if (config.data.datasets.length > 0) {
+      config.data.labels.push(timestamp);   // store the timestamp from noje.js server as x-axis label
+      $.each(config.data.datasets, function(i, dataset) {
+          dataset.data.push(temperature); 
+      });
+  }
+  if (config.data.labels.length > 24 ) {  // 24 measurement samples exceeded, remove the oldest sample
+      config.data.labels.splice(0, 1); // remove the first timestamp from label
+      config.data.datasets.forEach(function(dataset, datasetIndex) {
+            dataset.data.shift(); // remove the first data sample as well
+        });
+  }
+  if (temperature < 0) { // it's freezing out there
+    pointColor = "rgba(58,55,250,1)"; // blue
+  }
+  else {
+    pointColor = "rgba(250,10,10,1)"; // red
+  }
+  config.data.datasets.forEach(function(dataset, datasetIndex) {
+    //dataset.borderColor = "rgba(2,2,1,1)";
+    //dataset.backgroundColor = pointColor;
+    dataset.pointBorderColor.push(pointColor);
+    dataset.pointBackgroundColor.push(pointColor);
+    dataset.pointBorderWidth = 1;
+  });
+  window.myLine.update();
+}
+</script>
+
+<table border="0" width="900" height="400">
+<tr>
+<th style="width:600"></th>
+<th style="width:50"></th>
+<th style="width:250"></th>
+</tr>
+<tr><td>
+  <div style="width:100%">
+        <canvas id="myChart" width="600" height="400"></canvas>
+  </div>
+</td><td width="50">
+</td><td width="250" background="images/display2.png" style="background-repeat:no-repeat;background-position:center">
+  <center> <font size="7"><div id="temp"></div></font></center>
+</td></tr>
+</table>
+
+<div style="width:40%;">
+        <canvas id="myChart" width="500" height="400"></canvas>
+    </div>
+    
+<script>
+// data for the graph
+var pointColor = ""; // init
+var config = {
+    type: 'line',
+    data: {
+        labels: [],
+        datasets: [{
+            label: "Temperature",
+            data: [],
+            pointBorderColor: [],
+            pointBackgroundColor: [],
+            fill: false,
+        }]
+    },
+    options: {
+        responsive: true,
+        legend: {
+            position: 'bottom',
+        },
+        hover: {
+            mode: 'label'
+        },
+        scales: {
+            xAxes: [{
+                display: true,
+                scaleLabel: {
+                    display: true,
+                    labelString: 'Time'
+                }
+            }],
+            yAxes: [{
+                display: true,
+                scaleLabel: {
+                    display: true,
+                    labelString: '°Celsius'
+                }
+            }]
+        },
+        title: {
+            display: true,
+            text: 'Temperature'
+        }
+    }
+};
+window.onload = function() {
+    var ctx = document.getElementById("myChart").getContext("2d");
+    window.myLine = new Chart(ctx, config);
+};
+document.getElementById("temp").innerHTML = "---"; // init
+</script>
+</body>
+</html> 
