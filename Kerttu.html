@@ -11,18 +11,41 @@
 <script> var socket = io("http://localhost:8080"); 
   socket.on('PushData', function (data) {
             console.log("data from socket" + data); // remove this
-            ShowMeasuredTemp(data);
+            ShowMeasuredTemp(JSON.parse(data));
+            window.myLine.update();
 });
             
 </script> 
 
 <script>
-var client = new XMLHttpRequest(); // not needed yet
+  var client = new XMLHttpRequest(); //
+
+client.onreadystatechange = function() {
+  if (client.readyState == 4 && client.status == 200) {
+      var tempData = JSON.parse(client.responseText); 
+      for (i=0; i<tempData.length;i++) {
+      ShowMeasuredTemp(tempData[i]);
+      }
+      window.myLine.update();
+  }
+  // If status code is not 200, do not handle
+  if (client.status != 200) {
+      console.log("status " + client.status + " State: " + client.readyState);
+      return false;
+  }
+}
+
+function getTempData(){
+  console.log("get data from Kerttu");
+  var url = "http://localhost:8080/getTempData";
+  client.open("GET", url, true);
+  client.withCredentials = false;
+  client.send();
+}
 
 function ShowMeasuredTemp(inputData) { 
-  var data = JSON.parse(inputData);
-  var temperature = data.temp;
-  var timestamp   = data.time;
+  var temperature = inputData.temp;
+  var timestamp   = inputData.time;
   document.getElementById("temp").innerHTML = temperature;
   
   if (config.data.datasets.length > 0) {
@@ -50,7 +73,6 @@ function ShowMeasuredTemp(inputData) {
     dataset.pointBackgroundColor.push(pointColor);
     dataset.pointBorderWidth = 1;
   });
-  window.myLine.update();
 }
 </script>
 
@@ -65,7 +87,7 @@ function ShowMeasuredTemp(inputData) {
         <canvas id="myChart" width="600" height="400"></canvas>
   </div>
 </td><td width="50">
-</td><td width="250" background="display2.png" style="background-repeat:no-repeat;background-position:center">
+</td><td width="250" background="images/display2.png" style="background-repeat:no-repeat;background-position:center">
   <center> <font size="7"><div id="temp"></div></font></center>
 </td></tr>
 </table>
@@ -122,8 +144,9 @@ var config = {
 window.onload = function() {
     var ctx = document.getElementById("myChart").getContext("2d");
     window.myLine = new Chart(ctx, config);
+    getTempData();// get recorded measurements from the database
 };
 document.getElementById("temp").innerHTML = "---"; // init
 </script>
 </body>
-</html> 
+</html>
