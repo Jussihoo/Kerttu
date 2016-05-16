@@ -21,3 +21,6 @@ ToDo list:
 - implement functionality in the node.js to get data from the database for last 24 or so measurements / last 7 days / last / month
 - implement alarm functionality for setting alarm when the temperature crossed a certain threshold and then sending the alarm via e-mail
 - implement functionality and REST APIs to get the battery level of the Thingsee One and to display it on the web page. Perhaps generating alarm too if level goes below threshold?
+
+<bold>Kerttu is currently running in the Amazon cloud</bold>. Try it http://52.34.164.37/Kerttu.html
+Please note however that the service might be down to the R&D purposes. 
