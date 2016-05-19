@@ -37,7 +37,7 @@ var sendRes = function(res,items){
 };
 
 function getTempData(res,callback){
-   db.collection('temperature').find({},{time:1, temp:1, _id:0}).sort({ $natural: -1 }).limit(24).toArray(function(err,items){ // get the last 24 items
+   db.collection('temperature').find({time: {$gt: new Date(new Date().setDate(new Date().getDate()-1))},{time:1, temp:1, _id:0}).sort({ $natural: -1 }).limit(144).toArray(function(err,items){ // get the last 24 hours
            assert.equal(err, null);
            items.reverse(); // change the order to be from oldest to newest timestamps
            console.dir(items); // remove this 
@@ -79,10 +79,10 @@ server.post('/', function (req, res, next) {
     var hh = addZero(time.getHours());
     var mm = addZero(time.getMinutes());
     var ss = addZero(time.getSeconds());
-    time = hh + ":" + mm + ":" + ss; 
+    consoleTime = hh + ":" + mm + ":" + ss; 
     var currentTemp = 0; // init
     
-    console.log('got IOT message from Lutikka. Timestamp ' + time); // remove this
+    console.log('got IOT message from Lutikka. Timestamp ' + consoleTime); // remove this
     console.log("The measured temperature is " + req.params[0].senses[0].val); // remove this
     var currentTemp = req.params[0].senses[0].val
     PushMeasuredData(currentTemp, time); // send data to browser
