@@ -37,12 +37,12 @@ var sendRes = function(res,items){
 };
 
 function getTempData(res,callback){
-   db.collection('temperature').find({time: {$gt: new Date(new Date().setDate(new Date().getDate()-1))},{time:1, temp:1, _id:0}).sort({ $natural: -1 }).limit(144).toArray(function(err,items){ // get the last 24 hours
+    db.collection('temperature').find({},{time:1, temp:1, _id:0}).sort({ $natural: -1 }).limit(144).toArray(function(err,items){ // get the last 24 hours
            assert.equal(err, null);
            items.reverse(); // change the order to be from oldest to newest timestamps
            console.dir(items); // remove this 
            callback( res, items); // once all items read from database (asynchronous call), call the callback function and send the response        
-        });
+    });
 };
 
 function PushMeasuredData(currentTemp, timestamp){
@@ -79,7 +79,7 @@ server.post('/', function (req, res, next) {
     var hh = addZero(time.getHours());
     var mm = addZero(time.getMinutes());
     var ss = addZero(time.getSeconds());
-    consoleTime = hh + ":" + mm + ":" + ss; 
+    var consoleTime = hh + ":" + mm + ":" + ss; 
     var currentTemp = 0; // init
     
     console.log('got IOT message from Lutikka. Timestamp ' + consoleTime); // remove this
