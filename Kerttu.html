@@ -45,7 +45,9 @@ function getTempData(){
 
 function ShowMeasuredTemp(inputData) { 
   var temperature = inputData.temp;
-  var timestamp   = inputData.time;
+  var options = {hour: "2-digit", minute: "2-digit"};
+  var time   = new Date(inputData.time);
+  var timestamp = time.toLocaleString([],options);
   document.getElementById("temp").innerHTML = temperature;
   
   if (config.data.datasets.length > 0) {
@@ -54,7 +56,7 @@ function ShowMeasuredTemp(inputData) {
           dataset.data.push(temperature); 
       });
   }
-  if (config.data.labels.length > 24 ) {  // 24 measurement samples exceeded, remove the oldest sample
+  if (config.data.labels.length > 144 ) {  // 144 measurement samples exceeded, remove the oldest sample
       config.data.labels.splice(0, 1); // remove the first timestamp from label
       config.data.datasets.forEach(function(dataset, datasetIndex) {
             dataset.data.shift(); // remove the first data sample as well
@@ -71,7 +73,7 @@ function ShowMeasuredTemp(inputData) {
     //dataset.backgroundColor = pointColor;
     dataset.pointBorderColor.push(pointColor);
     dataset.pointBackgroundColor.push(pointColor);
-    dataset.pointBorderWidth = 1;
+    dataset.pointRadius = 0;
   });
 }
 </script>
@@ -105,10 +107,13 @@ var config = {
         labels: [],
         datasets: [{
             label: "Temperature",
-            data: [],
             pointBorderColor: [],
             pointBackgroundColor: [],
+            pointStyle: "circle",
+            pointBorderWidth: 0,
+            pointRadius: 0,
             fill: false,
+            data: [],
         }]
     },
     options: {
@@ -119,12 +124,20 @@ var config = {
         hover: {
             mode: 'label'
         },
+        elements: {
+            point: {
+                radius: 1
+            }
+        },
         scales: {
             xAxes: [{
                 display: true,
                 scaleLabel: {
                     display: true,
                     labelString: 'Time'
+                },
+                ticks: {
+                  maxTicksLimit: 12
                 }
             }],
             yAxes: [{
@@ -149,4 +162,4 @@ window.onload = function() {
 document.getElementById("temp").innerHTML = "---"; // init
 </script>
 </body>
-</html>
+</html> 
