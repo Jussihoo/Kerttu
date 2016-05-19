@@ -37,7 +37,7 @@ var sendRes = function(res,items){
 };
 
 function getTempData(res,callback){
-    db.collection('temperature').find({},{time:1, temp:1, _id:0}).sort({ $natural: -1 }).limit(144).toArray(function(err,items){ // get the last 24 hours
+    db.collection('temperature').find({time: {$gte: new Date(new Date().setDate(new Date().getDate()-1))}},{time:1, temp:1, _id:0}).sort({ $natural: -1 }).limit(144).toArray(function(err,items){ // get the last 24 hours
            assert.equal(err, null);
            items.reverse(); // change the order to be from oldest to newest timestamps
            console.dir(items); // remove this 
