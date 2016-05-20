@@ -28,6 +28,7 @@ client.onreadystatechange = function() {
       if (sampleLength <72){
         sampleLength = 72; 
       } 
+      clearGraphData(); // clears the graph data
       for (i=0; i<tempData.length;i++) {
         ShowMeasuredTemp(tempData[i]);
       }
@@ -64,8 +65,6 @@ function ShowMeasuredTemp(inputData) {
   var time   = new Date(inputData.time);
   var timestamp = time.toLocaleString([],options);
   document.getElementById("temp").innerHTML = temperature;
-  
-  clearGraphData(); // clears the graph data
   
   if (config.data.datasets.length > 0) {
       config.data.labels.push(timestamp);   // store the timestamp from node.js server as x-axis label
