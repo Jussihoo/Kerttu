@@ -19,12 +19,17 @@
 
 <script>
   var client = new XMLHttpRequest(); //
+  var sampleLength = 72; // init as 6 measurements per hour and 12 hours
 
 client.onreadystatechange = function() {
   if (client.readyState == 4 && client.status == 200) {
-      var tempData = JSON.parse(client.responseText); 
+      var tempData = JSON.parse(client.responseText);
+      sampleLength = tempData.length;
+      if (sampleLength <72){
+        sampleLength = 72; 
+      } 
       for (i=0; i<tempData.length;i++) {
-      ShowMeasuredTemp(tempData[i]);
+        ShowMeasuredTemp(tempData[i]);
       }
       window.myLine.update();
   }
@@ -35,28 +40,40 @@ client.onreadystatechange = function() {
   }
 }
 
-function getTempData(){
-  console.log("get data from Kerttu");
+function getTempData(range){
+  console.log("get data from Kerttu for " + range + " hours");
   var url = "http://localhost:8080/getTempData";
-  client.open("GET", url, true);
+  client.open("POST", url, true);
   client.withCredentials = false;
-  client.send();
+  client.setRequestHeader('Content-Type', 'application/json; charset=utf-8');
+  client.setRequestHeader('Content-Length', range.length);
+  client.send(JSON.stringify(range));
 }
 
-function ShowMeasuredTemp(inputData) { 
+function clearGraphData(){
+  config.data.labels.splice(0, config.data.labels.length); // remove all timestamps from label
+  config.data.datasets.forEach(function(dataset, datasetIndex) {
+      dataset.data.splice(0, dataset.data.length); // remove all data samples
+  });  
+}
+
+function ShowMeasuredTemp(inputData) {
+   
   var temperature = inputData.temp;
   var options = {hour: "2-digit", minute: "2-digit"};
   var time   = new Date(inputData.time);
   var timestamp = time.toLocaleString([],options);
   document.getElementById("temp").innerHTML = temperature;
   
+  clearGraphData(); // clears the graph data
+  
   if (config.data.datasets.length > 0) {
-      config.data.labels.push(timestamp);   // store the timestamp from noje.js server as x-axis label
+      config.data.labels.push(timestamp);   // store the timestamp from node.js server as x-axis label
       $.each(config.data.datasets, function(i, dataset) {
           dataset.data.push(temperature); 
       });
   }
-  if (config.data.labels.length > 144 ) {  // 144 measurement samples exceeded, remove the oldest sample
+  if (config.data.labels.length > sampleLength ) {  // 144 measurement samples exceeded, remove the oldest sample
       config.data.labels.splice(0, 1); // remove the first timestamp from label
       config.data.datasets.forEach(function(dataset, datasetIndex) {
             dataset.data.shift(); // remove the first data sample as well
@@ -77,6 +94,24 @@ function ShowMeasuredTemp(inputData) {
   });
 }
 </script>
+
+<table border="0" width="300">
+<tr>
+<th style="width:100"></th>
+<th style="width:100"></th>
+<th style="width:100"></th>
+</tr>
+<tr><td width="100">
+  <button type="button" onclick="getTempData(12)">12H</button>
+  <div id="B12"></div>
+</td><td width="100">
+  <button type="button" onclick="getTempData(24)">24H</button>
+  <div id="B24"></div>
+</td><td width="100">
+  <button type="button" onclick="getTempData(48)">48H</button>
+  <div id="B48"></div>
+</td></tr>
+</table>
 
 <table border="0" width="900" height="400">
 <tr>
@@ -157,7 +192,7 @@ var config = {
 window.onload = function() {
     var ctx = document.getElementById("myChart").getContext("2d");
     window.myLine = new Chart(ctx, config);
-    getTempData();// get recorded measurements from the database
+    getTempData(12);// get recorded measurements from the database
 };
 document.getElementById("temp").innerHTML = "---"; // init
 </script>
