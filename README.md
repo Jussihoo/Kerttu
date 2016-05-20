@@ -17,8 +17,8 @@ ToDo list:
 - active pressure sensor and implement data processing in the node.js server
 - implement processing of pressure data and graph plotting in the html
 - implement REST API to get old data from the node.js. Web page uses this when starting to display the data of 24 or so last measurements *DONE for the temperature data*
-- implement functionality in the web page to choose whether to show last 24 hour measurement / last 7 days / last month. This uses the REST API to get the old data
-- implement functionality in the node.js to get data from the database for last 24 or so measurements / last 7 days / last / month
+- implement functionality in the web page to choose whether to show last 24 hour measurement / last 7 days / last month. This uses the REST API to get the old data *DONE*
+- implement functionality in the node.js to get data from the database for last 24 or so measurements / last 7 days / last / month *DONE*
 - implement alarm functionality for setting alarm when the temperature crossed a certain threshold and then sending the alarm via e-mail
 - implement functionality and REST APIs to get the battery level of the Thingsee One and to display it on the web page. Perhaps generating alarm too if level goes below threshold?
 - implement facebook and/or twitter connectivity and make Kerttu to tweet or send a Facebook status update whenever a new temperature e.g. record is broken etc.
