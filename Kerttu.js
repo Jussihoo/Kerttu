@@ -36,8 +36,10 @@ var sendRes = function(res,items){
     res.send(items);
 };
 
-function getTempData(res,callback){
-    db.collection('temperature').find({time: {$gte: new Date(new Date().setDate(new Date().getDate()-1))}},{time:1, temp:1, _id:0}).sort({ $natural: -1 }).limit(144).toArray(function(err,items){ // get the last 24 hours
+function getTempData(range, res,callback){
+    var kukkuu = 20 - range;
+    console.log("kukkuu " + kukkuu);
+    db.collection('temperature').find({time: {$gte: new Date(new Date().setHours(new Date().getHours()-range))}},{time:1, temp:1, _id:0}).sort({ $natural: -1 }).toArray(function(err,items){ // get the last 24 hours
            assert.equal(err, null);
            items.reverse(); // change the order to be from oldest to newest timestamps
            console.dir(items); // remove this 
@@ -67,9 +69,9 @@ MongoClient.connect(url, function(err, database) {
 });
 
 //REST API implementation for getting the initial temperature data to be shown in the UI
-server.get('/getTempData', function (req, res, next) {
-    getTempData(res, sendRes);
-    console.log ("A request to get temperature data from the database was received");
+server.post('/getTempData', function (req, res, next) {
+    getTempData(req.params, res, sendRes);
+    console.log ("A request to get temperature data for last " + req.params + " hours from the database was received");
     next();
 });
 
