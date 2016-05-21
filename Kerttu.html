@@ -24,10 +24,6 @@
 client.onreadystatechange = function() {
   if (client.readyState == 4 && client.status == 200) {
       var tempData = JSON.parse(client.responseText);
-      sampleLength = tempData.length;
-      if (sampleLength <72){
-        sampleLength = 72; 
-      } 
       clearGraphData(); // clears the graph data
       for (i=0; i<tempData.length;i++) {
         ShowMeasuredTemp(tempData[i]);
@@ -43,6 +39,7 @@ client.onreadystatechange = function() {
 
 function getTempData(range){
   console.log("get data from Kerttu for " + range + " hours");
+  sampleLength = parseInt(range) * 6; // 6 measurements within an hour.
   var url = "http://localhost:8080/getTempData";
   client.open("POST", url, true);
   client.withCredentials = false;
@@ -61,7 +58,7 @@ function clearGraphData(){
 function ShowMeasuredTemp(inputData) {
    
   var temperature = inputData.temp;
-  var options = {hour: "2-digit", minute: "2-digit"};
+  var options = {weekday: "short", hour: "2-digit", minute: "2-digit"};
   var time   = new Date(inputData.time);
   var timestamp = time.toLocaleString([],options);
   document.getElementById("temp").innerHTML = temperature;
@@ -72,7 +69,7 @@ function ShowMeasuredTemp(inputData) {
           dataset.data.push(temperature); 
       });
   }
-  if (config.data.labels.length > sampleLength ) {  // 144 measurement samples exceeded, remove the oldest sample
+  if (config.data.labels.length > sampleLength ) {  // measurement sample upper boundary exceeded, remove the oldest sample
       config.data.labels.splice(0, 1); // remove the first timestamp from label
       config.data.datasets.forEach(function(dataset, datasetIndex) {
             dataset.data.shift(); // remove the first data sample as well

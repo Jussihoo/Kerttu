@@ -37,11 +37,8 @@ var sendRes = function(res,items){
 };
 
 function getTempData(range, res,callback){
-    var kukkuu = 20 - range;
-    console.log("kukkuu " + kukkuu);
-    db.collection('temperature').find({time: {$gte: new Date(new Date().setHours(new Date().getHours()-range))}},{time:1, temp:1, _id:0}).sort({ $natural: -1 }).toArray(function(err,items){ // get the last 24 hours
+    db.collection('temperature').find({time: {$gte: new Date(new Date().setHours(new Date().getHours()-range))}},{time:1, temp:1, _id:0}).sort({ time: 1 }).toArray(function(err,items){ // get the samples from database
            assert.equal(err, null);
-           items.reverse(); // change the order to be from oldest to newest timestamps
            console.dir(items); // remove this 
            callback( res, items); // once all items read from database (asynchronous call), call the callback function and send the response        
     });
