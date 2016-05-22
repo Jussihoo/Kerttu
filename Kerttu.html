@@ -186,6 +186,10 @@ var config = {
     }
 };
 window.onload = function() {
+    console.log(navigator.userAgent);
+    $.get("http://ipinfo.io", function(response) {
+      console.log(response);
+    }, "jsonp");
     var ctx = document.getElementById("myChart").getContext("2d");
     window.myLine = new Chart(ctx, config);
     getTempData(12);// get recorded measurements from the database
