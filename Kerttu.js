@@ -36,6 +36,22 @@ var sendRes = function(res,items){
     res.send(items);
 };
 
+function getVisitorCounter(res,callback){
+   db.collection('log').count(function(err,visitorCount){ // get the amount of log items
+   assert.equal(err, null);
+     console.dir(visitorCount); // remove this 
+     callback( res, JSON.stringify(visitorCount)); // once the count is read from database (asynchronous call), call the callback function and send the response        
+   });  
+}
+
+function storeLogdata(logdata, res, callback) {
+  console.dir(logdata);
+  db.collection('log').insert(logdata, function(err, result) {
+     assert.equal(err, null);
+     callback( res, sendRes); // once all items read from database (asynchronous call), call the callback function and send the response        
+  });
+}
+
 function getTempData(range, res,callback){
     db.collection('temperature').find({time: {$gte: new Date(new Date().setHours(new Date().getHours()-range))}},{time:1, temp:1, _id:0}).sort({ time: 1 }).toArray(function(err,items){ // get the samples from database
            assert.equal(err, null);
@@ -69,6 +85,17 @@ MongoClient.connect(url, function(err, database) {
 server.post('/getTempData', function (req, res, next) {
     getTempData(req.params, res, sendRes);
     console.log ("A request to get temperature data for last " + req.params + " hours from the database was received");
+    next();
+});
+
+//REST API implementation for getting the log data from the client
+server.post('/sendLog', function (req, res, next) {
+    var logdata = req.params;
+    logdata.browser = req.headers['user-agent'];
+    logdata.time = new Date();
+    console.log ("Log information received");
+    console.dir (req.headers);
+    storeLogdata(logdata, res, getVisitorCounter);
     next();
 });
 

@@ -18,34 +18,57 @@
 </script> 
 
 <script>
-  var client = new XMLHttpRequest(); //
   var sampleLength = 72; // init as 6 measurements per hour and 12 hours
 
-client.onreadystatechange = function() {
-  if (client.readyState == 4 && client.status == 200) {
-      var tempData = JSON.parse(client.responseText);
-      clearGraphData(); // clears the graph data
-      for (i=0; i<tempData.length;i++) {
-        ShowMeasuredTemp(tempData[i]);
-      }
-      window.myLine.update();
+function handleTemperatureData(client){
+  var tempData = JSON.parse(client.responseText);
+  sampleLength = tempData.length;
+  if (sampleLength <72){
+    sampleLength = 72; 
+  } 
+  clearGraphData(); // clears the graph data
+  for (i=0; i<tempData.length;i++) {
+    ShowMeasuredTemp(tempData[i]);
   }
-  // If status code is not 200, do not handle
-  if (client.status != 200) {
-      console.log("status " + client.status + " State: " + client.readyState);
-      return false;
-  }
+  window.myLine.update();
+  
+}
+
+function visitorCounter(client){
+  console.log("The page has been loaded " + JSON.parse(client.responseText) + " times");
+  document.getElementById("visitor").innerHTML = "page has been loaded " + JSON.parse(client.responseText) + " times";
+}
+  
+function communicateWithTheServer(url, data, callback) {
+    var client = new XMLHttpRequest(); //
+    client.onreadystatechange = function() {
+        if (client.readyState == 4 && client.status == 200) {
+            callback(client);
+        }
+        // If status code is not 200, do not handle
+        if (client.status != 200) {
+            console.log("status " + client.status + " State: " + client.readyState);
+            return false;
+        }
+    };
+    client.open("POST", url, true);
+    client.withCredentials = false;
+    client.setRequestHeader('Content-Type', 'application/json; charset=utf-8');
+    client.setRequestHeader('Content-Length', data.length);
+    client.send(data);
 }
 
 function getTempData(range){
   console.log("get data from Kerttu for " + range + " hours");
   sampleLength = parseInt(range) * 6; // 6 measurements within an hour.
   var url = "http://localhost:8080/getTempData";
-  client.open("POST", url, true);
-  client.withCredentials = false;
-  client.setRequestHeader('Content-Type', 'application/json; charset=utf-8');
-  client.setRequestHeader('Content-Length', range.length);
-  client.send(JSON.stringify(range));
+  var status = communicateWithTheServer(url,JSON.stringify(range), handleTemperatureData);
+}
+
+function sendLogdata(logdata){
+  console.log("Store log information");
+  var url = "http://localhost:8080/sendLog";
+  var status = communicateWithTheServer(url,JSON.stringify(logdata), visitorCounter);
 }
 
 function clearGraphData(){
@@ -125,9 +148,7 @@ function ShowMeasuredTemp(inputData) {
 </td></tr>
 </table>
 
-<div style="width:40%;">
-        <canvas id="myChart" width="500" height="400"></canvas>
-    </div>
+<center> <font size="1"><div id="visitor"></div></font></center>
     
 <script>
 // data for the graph
@@ -186,9 +207,8 @@ var config = {
     }
 };
 window.onload = function() {
-    console.log(navigator.userAgent);
     $.get("http://ipinfo.io", function(response) {
-      console.log(response);
+      sendLogdata(response);
     }, "jsonp");
     var ctx = document.getElementById("myChart").getContext("2d");
     window.myLine = new Chart(ctx, config);
