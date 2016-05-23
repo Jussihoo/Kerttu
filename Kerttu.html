@@ -207,6 +207,8 @@ var config = {
     }
 };
 window.onload = function() {
+    // this is a temorary solution. This service is free to use for 1000 request per day
+    // evaluate a better solution or implement own solution for this
     $.get("http://ipinfo.io", function(response) {
       sendLogdata(response);
     }, "jsonp");

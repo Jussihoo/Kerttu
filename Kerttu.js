@@ -91,7 +91,7 @@ server.post('/getTempData', function (req, res, next) {
 //REST API implementation for getting the log data from the client
 server.post('/sendLog', function (req, res, next) {
     var logdata = req.params;
-    logdata.browser = req.headers['user-agent'];
+    logdata.browser = req.headers['user-agent']; // store browser info
     logdata.time = new Date();
     console.log ("Log information received");
     console.dir (req.headers);
