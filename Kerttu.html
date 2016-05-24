@@ -115,8 +115,10 @@ function ShowMeasuredTemp(inputData) {
 }
 </script>
 
-<table border="0" width="300">
+<table border="0" width="500">
 <tr>
+<th style="width:100"></th>
+<th style="width:100"></th>
 <th style="width:100"></th>
 <th style="width:100"></th>
 <th style="width:100"></th>
@@ -130,6 +132,12 @@ function ShowMeasuredTemp(inputData) {
 </td><td width="100">
   <button type="button" onclick="getTempData(48,true)">48H</button>
   <div id="B48"></div>
+</td><td width="100">
+  <button type="button" onclick="getTempData(120,true)">5D</button>
+  <div id="B120"></div>
+</td><td width="100">
+  <button type="button" onclick="getTempData(168,true)">7D</button>
+  <div id="B168"></div>
 </td></tr>
 </table>
 
