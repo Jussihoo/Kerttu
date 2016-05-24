@@ -52,7 +52,35 @@ function storeLogdata(logdata, res, callback) {
   });
 }
 
+function getButtonStats(res, items, callback){
+  var logs = {};
+  logs["logitems"] = items;
+  db.collection('buttonStats').find({},{_id:0}).toArray(function(err,stats) {
+     assert.equal(err, null);
+     logs["stats"] = stats;
+     callback(res, logs); // once all items read from database (asynchronous call), call the callback function and send the response        
+  });  
+}
+
+function getLogdata(res, callback) {
+  db.collection('log').find({},{ip:1,hostname:1,time:1,_id:0}).sort({time:1}).toArray(function(err,items) {
+     assert.equal(err, null);
+     callback(res, items, sendRes); // once all items read from database (asynchronous call), call the callback function and send the response        
+  });
+}
+
+function storeButtonStats(range, res,callback){
+  console.log("store button data into the DB " + range);
+  var data = {};
+  data[range] = 1;
+  db.collection('buttonStats').update({},{$inc: data},{upsert: true}, function(err, result) { // increment range value by one
+     assert.equal(err, null);
+     callback( range, res, sendRes); // once the buttonStats have been updated into the database (asynchronous call), call the callback function and getTempData        
+  });
+}
+
 function getTempData(range, res,callback){
+    console.dir(range);
     db.collection('temperature').find({time: {$gte: new Date(new Date().setHours(new Date().getHours()-range))}},{time:1, temp:1, _id:0}).sort({ time: 1 }).toArray(function(err,items){ // get the samples from database
            assert.equal(err, null);
            console.dir(items); // remove this 
@@ -83,8 +111,14 @@ MongoClient.connect(url, function(err, database) {
 
 //REST API implementation for getting the initial temperature data to be shown in the UI
 server.post('/getTempData', function (req, res, next) {
-    getTempData(req.params, res, sendRes);
-    console.log ("A request to get temperature data for last " + req.params + " hours from the database was received");
+    if (req.params.buttonStats){ // button has been pressed, store stats into database
+      storeButtonStats(req.params.range, res, getTempData );
+    }
+    else
+    { // button has not been pressed, no need to store stats into database
+      getTempData(req.params, res, sendRes);
+      console.log ("A request to get temperature data for last " + req.params + " hours from the database was received");
+    }
     next();
 });
 
@@ -96,6 +130,13 @@ server.post('/sendLog', function (req, res, next) {
     console.log ("Log information received");
     console.dir (req.headers);
     storeLogdata(logdata, res, getVisitorCounter);
+    next();
+});
+
+//REST API implementation for getting the log data from the client
+server.post('/getLog', function (req, res, next) {
+    console.log ("Log request received");
+    getLogdata(res, getButtonStats);
     next();
 });
 

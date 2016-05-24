@@ -58,11 +58,12 @@ function communicateWithTheServer(url, data, callback) {
     client.send(data);
 }
 
-function getTempData(range){
+function getTempData(range, buttonStats){
   console.log("get data from Kerttu for " + range + " hours");
   sampleLength = parseInt(range) * 6; // 6 measurements within an hour.
   var url = "http://localhost:8080/getTempData";
-  var status = communicateWithTheServer(url,JSON.stringify(range), handleTemperatureData);
+  var reqData = {range: range, buttonStats: buttonStats};
+  var status = communicateWithTheServer(url,JSON.stringify(reqData), handleTemperatureData);
 }
 
 function sendLogdata(logdata){
@@ -121,13 +122,13 @@ function ShowMeasuredTemp(inputData) {
 <th style="width:100"></th>
 </tr>
 <tr><td width="100">
-  <button type="button" onclick="getTempData(12)">12H</button>
+  <button type="button" onclick="getTempData(12,true)">12H</button>
   <div id="B12"></div>
 </td><td width="100">
-  <button type="button" onclick="getTempData(24)">24H</button>
+  <button type="button" onclick="getTempData(24,true)">24H</button>
   <div id="B24"></div>
 </td><td width="100">
-  <button type="button" onclick="getTempData(48)">48H</button>
+  <button type="button" onclick="getTempData(48,true)">48H</button>
   <div id="B48"></div>
 </td></tr>
 </table>
@@ -207,14 +208,14 @@ var config = {
     }
 };
 window.onload = function() {
-    // this is a temorary solution. This service is free to use for 1000 request per day
+    // this is a temporary solution. This service is free to use for 1000 request per day
     // evaluate a better solution or implement own solution for this
     $.get("http://ipinfo.io", function(response) {
       sendLogdata(response);
     }, "jsonp");
     var ctx = document.getElementById("myChart").getContext("2d");
     window.myLine = new Chart(ctx, config);
-    getTempData(12);// get recorded measurements from the database
+    getTempData(12,null);// get recorded measurements from the database
 };
 document.getElementById("temp").innerHTML = "---"; // init
 </script>
