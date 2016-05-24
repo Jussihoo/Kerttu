@@ -116,8 +116,8 @@ server.post('/getTempData', function (req, res, next) {
     }
     else
     { // button has not been pressed, no need to store stats into database
-      getTempData(req.params, res, sendRes);
-      console.log ("A request to get temperature data for last " + req.params + " hours from the database was received");
+      getTempData(req.params.range, res, sendRes);
+      console.log ("A request to get temperature data for last " + req.params.range + " hours from the database was received");
     }
     next();
 });

@@ -215,7 +215,7 @@ window.onload = function() {
     }, "jsonp");
     var ctx = document.getElementById("myChart").getContext("2d");
     window.myLine = new Chart(ctx, config);
-    getTempData(12,null);// get recorded measurements from the database
+    getTempData(12,false);// get recorded measurements from the database
 };
 document.getElementById("temp").innerHTML = "---"; // init
 </script>
