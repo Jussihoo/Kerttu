@@ -16,6 +16,9 @@ ToDo list:
 - implement processing of humidity data and graph plotting in the html
 - active pressure sensor and implement data processing in the node.js server
 - implement processing of pressure data and graph plotting in the html
+- implement logging visitor data and statistics for pressing buttons *DONE*
+- implement REST API for getting the log data *DONE*
+- implement functionality to show the log data
 - implement REST API to get old data from the node.js. Web page uses this when starting to display the data of 24 or so last measurements *DONE for the temperature data*
 - implement functionality in the web page to choose whether to show last 24 hour measurement / last 7 days / last month. This uses the REST API to get the old data *DONE*
 - implement functionality in the node.js to get data from the database for last 24 or so measurements / last 7 days / last / month *DONE*
