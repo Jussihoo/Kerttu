@@ -31,6 +31,19 @@ var StoreTempData = function(currentTemp, timestamp) {
       console.log("stored temperature data into the database");
   });
 }
+var StoreHumidityData = function(currentHumidity, timestamp) {
+   db.collection('humidity').insert({time: timestamp, humidity: currentHumidity}, function(err, result) {
+      assert.equal(err, null);
+      console.log("stored humidity data into the database");
+  });
+}
+
+var StorePressureData = function(currentPressure, timestamp) {
+   db.collection('pressure').insert({time: timestamp, pressure: currentPressure}, function(err, result) {
+      assert.equal(err, null);
+      console.log("stored Pressure data into the database");
+  });
+}
 
 var sendRes = function(res,items){
     res.send(items);
@@ -95,6 +108,8 @@ function PushMeasuredData(currentTemp, timestamp){
 
 function handleSenses(senses, time){
     var currentTemp = 0; // init
+    var currentPressure = 0; // init
+    var currentHumidity = 0; // init
     for (var i=0; i<senses.length; i++){ // go through all the senses data
       if (senses[i].sId == '0x00060100' ){ // temperature data
         console.log("The measured temperature is " + senses[i].val); // remove this
@@ -103,12 +118,16 @@ function handleSenses(senses, time){
         StoreTempData(currentTemp, time);   
       }
       else if (senses[i].sId == '0x00060200' ){ // Humidity data
-        console.log("The measured Humidity is " + senses[i].val); // remove this   
+        console.log("The measured Humidity is " + senses[i].val); // remove this
+        currentHumidity = senses[i].val;
+        StoreHumidityData(currentHumidity, time);   
       }
       else if (senses[i].sId == '0x00060400' ){ // Air pressure data
-        console.log("The measured Air pressure is " + senses[i].val); // remove this   
+        console.log("The measured Air pressure is " + senses[i].val); // remove this
+        currentPressure = senses[i].val;
+        StorePressureData(currentPressure, time);   
       }
-      else(){
+      else{
         console.dir(senses[i]);
       }
     }  
