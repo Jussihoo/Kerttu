@@ -27,7 +27,7 @@ function handleTemperatureData(client){
     sampleLength = 72; 
   } 
   clearGraphData(); // clears the graph data
-  for (i=0; i<tempData.length;i++) {
+  for (var i=0; i<tempData.length;i++) {
     ShowMeasuredTemp(tempData[i]);
   }
   window.myLine.update();

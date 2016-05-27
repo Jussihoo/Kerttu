@@ -93,6 +93,27 @@ function PushMeasuredData(currentTemp, timestamp){
   io.emit('PushData', JSON.stringify(data));  // send data to browser
 }
 
+function handleSenses(senses, time){
+    var currentTemp = 0; // init
+    for (var i=0; i<senses.length; i++){ // go through all the senses data
+      if (senses[i].sId == '0x00060100' ){ // temperature data
+        console.log("The measured temperature is " + senses[i].val); // remove this
+        currentTemp = senses[i].val;
+        PushMeasuredData(currentTemp, time); // send data to browser
+        StoreTempData(currentTemp, time);   
+      }
+      else if (senses[i].sId == '0x00060200' ){ // Humidity data
+        console.log("The measured Humidity is " + senses[i].val); // remove this   
+      }
+      else if (senses[i].sId == '0x00060400' ){ // Air pressure data
+        console.log("The measured Air pressure is " + senses[i].val); // remove this   
+      }
+      else(){
+        console.dir(senses[i]);
+      }
+    }  
+}
+
 function addZero(i) { // adds leading zero to timestamp to get double digit figure
 if (i < 10) {
       i = "0" + i;
@@ -147,13 +168,9 @@ server.post('/', function (req, res, next) {
     var mm = addZero(time.getMinutes());
     var ss = addZero(time.getSeconds());
     var consoleTime = hh + ":" + mm + ":" + ss; 
-    var currentTemp = 0; // init
     
     console.log('got IOT message from Lutikka. Timestamp ' + consoleTime); // remove this
-    console.log("The measured temperature is " + req.params[0].senses[0].val); // remove this
-    var currentTemp = req.params[0].senses[0].val
-    PushMeasuredData(currentTemp, time); // send data to browser
-    StoreTempData(currentTemp, time);
+    handleSenses(req.params[0].senses, time);
 
     res.send(Number(200)); // sen reply, otherwise Thingsee does not send next measurement normally
     next();
