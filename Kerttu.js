@@ -11,8 +11,6 @@ var MongoClient = require('mongodb').MongoClient;
 var assert = require('assert');
 var db;
 
-var tempMeasurements = [];
-
 server.use(restify.bodyParser());
 
 // REMOVE THESE?? Needed for enabling CORS and needed for allowing cross-origin resource sharing 
@@ -22,30 +20,18 @@ server.use(restify.fullResponse());
 // socket
 var io = socketio.listen(server.server);
 
-
-var MeasurementPackage = []; // init
-
-var StoreTempData = function(currentTemp, timestamp) {
-   db.collection('temperature').insert({time: timestamp, temp: currentTemp}, function(err, result) {
+var storeSensesData = function(collection,sense, value, timestamp) {
+   var senseData = {};
+   senseData["time"] = timestamp;
+   senseData[sense]  = value;  
+   db.collection(collection).insert(senseData, function(err, result) {
       assert.equal(err, null);
-      console.log("stored temperature data into the database");
-  });
-}
-var StoreHumidityData = function(currentHumidity, timestamp) {
-   db.collection('humidity').insert({time: timestamp, humidity: currentHumidity}, function(err, result) {
-      assert.equal(err, null);
-      console.log("stored humidity data into the database");
-  });
-}
-
-var StorePressureData = function(currentPressure, timestamp) {
-   db.collection('pressure').insert({time: timestamp, pressure: currentPressure}, function(err, result) {
-      assert.equal(err, null);
-      console.log("stored Pressure data into the database");
+      console.log("stored senses data into the database for " + collection + " collection");
   });
 }
 
 var sendRes = function(res,items){
+    console.dir(items);
     res.send(items);
 };
 
@@ -88,21 +74,39 @@ function storeButtonStats(range, res,callback){
   data[range] = 1;
   db.collection('buttonStats').update({},{$inc: data},{upsert: true}, function(err, result) { // increment range value by one
      assert.equal(err, null);
-     callback( range, res, sendRes); // once the buttonStats have been updated into the database (asynchronous call), call the callback function and getTempData        
+     callback( range, res, getPressureData); // once the buttonStats have been updated into the database (asynchronous call), call the callback function and getTempData        
   });
 }
-
-function getTempData(range, res,callback){
-    console.dir(range);
-    db.collection('temperature').find({time: {$gte: new Date(new Date().setHours(new Date().getHours()-range))}},{time:1, temp:1, _id:0}).sort({ time: 1 }).toArray(function(err,items){ // get the samples from database
+function getHumidityData(range, res, samples, callback){
+    db.collection('humidity').find({time: {$gte: new Date(new Date().setHours(new Date().getHours()-range))}},{time:1, humidity:1, _id:0}).sort({ time: 1 }).toArray(function(err,items){ // get the samples from database
            assert.equal(err, null);
-           console.dir(items); // remove this 
-           callback( res, items); // once all items read from database (asynchronous call), call the callback function and send the response        
+           //console.dir(items); // remove this
+           samples.humidity = items; 
+           callback(res, samples); // once all items read from database (asynchronous call), call the callback function and send the response        
     });
 };
 
-function PushMeasuredData(currentTemp, timestamp){
-  var data = { temp: currentTemp, time: timestamp };
+function getPressureData(range, res, samples, callback){
+    db.collection('pressure').find({time: {$gte: new Date(new Date().setHours(new Date().getHours()-range))}},{time:1, pressure:1, _id:0}).sort({ time: 1 }).toArray(function(err,items){ // get the samples from database
+           assert.equal(err, null);
+           //console.dir(items); // remove this
+           samples.pressure = items; 
+           callback( range, res, samples, sendRes); // once all items read from database (asynchronous call), call the callback function and get the humidity data        
+    });
+};
+
+function getTempData(range, res,callback){
+    console.dir(range);
+    var samples = {};
+    db.collection('temperature').find({time: {$gte: new Date(new Date().setHours(new Date().getHours()-range))}},{time:1, temp:1, _id:0}).sort({ time: 1 }).toArray(function(err,items){ // get the samples from database
+           assert.equal(err, null);
+           //console.dir(items); // remove this
+           samples.temperature = items; 
+           callback( range, res, samples, getHumidityData); // once all items read from database (asynchronous call), call the callback function and get the pressure data        
+    });
+};
+
+function pushMeasuredData(data){
   io.emit('PushData', JSON.stringify(data));  // send data to browser
 }
 
@@ -110,27 +114,32 @@ function handleSenses(senses, time){
     var currentTemp = 0; // init
     var currentPressure = 0; // init
     var currentHumidity = 0; // init
+    var pushData = {};  // init
     for (var i=0; i<senses.length; i++){ // go through all the senses data
       if (senses[i].sId == '0x00060100' ){ // temperature data
         console.log("The measured temperature is " + senses[i].val); // remove this
         currentTemp = senses[i].val;
-        PushMeasuredData(currentTemp, time); // send data to browser
-        StoreTempData(currentTemp, time);   
+        pushData["temp"] = currentTemp;
+        pushData["time"] = time;
+        storeSensesData("temperature", "temp", currentTemp, time);   
       }
       else if (senses[i].sId == '0x00060200' ){ // Humidity data
         console.log("The measured Humidity is " + senses[i].val); // remove this
         currentHumidity = senses[i].val;
-        StoreHumidityData(currentHumidity, time);   
+        pushData["humidity"] = currentHumidity;
+        storeSensesData("humidity", "humidity", currentHumidity, time);   
       }
       else if (senses[i].sId == '0x00060400' ){ // Air pressure data
         console.log("The measured Air pressure is " + senses[i].val); // remove this
         currentPressure = senses[i].val;
-        StorePressureData(currentPressure, time);   
+        pushData["pressure"] = currentPressure;
+        storeSensesData("pressure", "pressure", currentPressure, time);  
       }
       else{
         console.dir(senses[i]);
       }
-    }  
+    }
+    pushMeasuredData(pushData); // send data to browser  
 }
 
 function addZero(i) { // adds leading zero to timestamp to get double digit figure
@@ -150,13 +159,13 @@ MongoClient.connect(url, function(err, database) {
 });
 
 //REST API implementation for getting the initial temperature data to be shown in the UI
-server.post('/getTempData', function (req, res, next) {
+server.post('/getSensesData', function (req, res, next) {
     if (req.params.buttonStats){ // button has been pressed, store stats into database
       storeButtonStats(req.params.range, res, getTempData );
     }
     else
     { // button has not been pressed, no need to store stats into database
-      getTempData(req.params.range, res, sendRes);
+      getTempData(req.params.range, res, getPressureData);
       console.log ("A request to get temperature data for last " + req.params.range + " hours from the database was received");
     }
     next();

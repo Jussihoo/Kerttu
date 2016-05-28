@@ -12,10 +12,10 @@ ToDo list:
 - Implement a nice visual display to show the measured temperature *DONE*
 - create an account on the AWS (Amazon cloud) and make the node.js server run there. This enables other persons to join the project and to display the data. *DONE*
 - implement storage of the data into the database in the node.js server *DONE*
-- active humidity sensor and implement data processing in the node.js server
-- implement processing of humidity data and graph plotting in the html
-- active pressure sensor and implement data processing in the node.js server
-- implement processing of pressure data and graph plotting in the html
+- active humidity sensor and implement data processing in the node.js server  *DONE*
+- implement processing of humidity data and graph plotting in the html *DONE*
+- active pressure sensor and implement data processing in the node.js server *DONE*
+- implement processing of pressure data and graph plotting in the html  *DONE*
 - implement logging visitor data and statistics for pressing buttons *DONE*
 - implement REST API for getting the log data *DONE*
 - implement functionality to show the log data
