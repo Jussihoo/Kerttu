@@ -61,6 +61,29 @@ function getButtonStats(res, items, callback){
   });  
 }
 
+function getChargerdata(res, batteryData, callback) {
+  db.collection('charger').find({},{time:1,_id:0}).sort({time:-1}).limit(1).toArray(function(err,item) {
+     assert.equal(err, null);
+     var charger = false;
+     console.log("patteriaika " + new Date(batteryData.battery.time) + " ja chargeraika" + new Date(item[0].time))
+     if (new Date(item[0].time) - new Date(batteryData.battery.time) == 0){ // charger is ON, same timestamp on battery and charger collections
+        charger = true;
+        console.log("charger is on");
+     }
+     batteryData.charger = charger;
+     callback(res, batteryData); // once the item read from database (asynchronous call), call the callback function and send the response        
+  });
+}
+
+function getBatterydata(res, callback) {
+  var batteryData = {};
+  db.collection('battery').find({},{battery:1,time:1,_id:0}).sort({time:-1}).limit(1).toArray(function(err,item) {
+     assert.equal(err, null);
+     batteryData.battery = item[0];
+     callback(res, batteryData, sendRes); // once the item read from database (asynchronous call), call the callback function and get charger data        
+  });
+}
+
 function getLogdata(res, callback) {
   db.collection('log').find({},{ip:1,hostname:1,time:1,_id:0}).sort({time:1}).toArray(function(err,items) {
      assert.equal(err, null);
@@ -114,6 +137,8 @@ function handleSenses(senses, time){
     var currentTemp = 0; // init
     var currentPressure = 0; // init
     var currentHumidity = 0; // init
+    var currentBattery = 0; // init
+    var chargerConnected = false; // init
     var pushData = {};  // init
     for (var i=0; i<senses.length; i++){ // go through all the senses data
       if (senses[i].sId == '0x00060100' ){ // temperature data
@@ -134,6 +159,20 @@ function handleSenses(senses, time){
         currentPressure = senses[i].val;
         pushData["pressure"] = currentPressure;
         storeSensesData("pressure", "pressure", currentPressure, time);  
+      }
+      else if (senses[i].sId == '0x00030200' ){ // Battery level data
+        console.log("The measured battery level is " + senses[i].val); // remove this
+        currentBattery = senses[i].val;
+        pushData["battery"] = currentBattery;
+        storeSensesData("battery", "battery", currentBattery, time);
+      }
+      else if (senses[i].sId == '0x00030400' ){ // Charger connected data
+        console.log("Charger is connected or not" + senses[i].val); // remove this
+        chargerConnected = senses[i].val;
+        pushData["charger"] = chargerConnected;
+        if (chargerConnected){ // charger is connected, store timestamps into database
+          storeSensesData("charger", "chargerOn", chargerConnected, time);
+        }
       }
       else{
         console.dir(senses[i]);
@@ -186,6 +225,13 @@ server.post('/sendLog', function (req, res, next) {
 server.post('/getLog', function (req, res, next) {
     console.log ("Log request received");
     getLogdata(res, getButtonStats);
+    next();
+});
+
+//REST API implementation for getting the log data from the client
+server.post('/battery', function (req, res, next) {
+    console.log ("Battery info requested");
+    getBatterydata(res, getChargerdata);
     next();
 });
 

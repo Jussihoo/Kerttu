@@ -34,6 +34,14 @@ socket.on('PushData', function (data) {
     pressureData["time"]     = allData.time;
     ShowMeasuredPressure(pressureData);
     window.myLine3.update();
+    
+    // handle battery data
+    var chargerText = "charger is not connected";
+    if (allData.charger){ // charger is connected
+      chargerText = "charger is connected"
+    }
+    document.getElementById("battery").innerHTML = "The IOT device battery has " + allData.battery + " % charge and " + chargerText;
+    
 });
 
 
@@ -78,6 +86,16 @@ function visitorCounter(client){
   console.log("The page has been loaded " + JSON.parse(client.responseText) + " times");
   document.getElementById("visitor").innerHTML = "page has been loaded " + JSON.parse(client.responseText) + " times";
 }
+
+function showBatteryInfo(client){
+  var batteryData = JSON.parse(client.responseText);
+  console.log("The battery has " + batteryData.battery.battery);
+  var chargerText = "charger is not connected";
+  if (batteryData.charger){ // charger is connected
+    chargerText = "charger is connected"
+  }
+  document.getElementById("battery").innerHTML = "The IOT device battery has " + batteryData.battery.battery + " % charge and " + chargerText;
+}
   
 function communicateWithTheServer(url, data, callback) {
     var client = new XMLHttpRequest(); //
@@ -104,6 +122,12 @@ function getSensesData(range, buttonStats){
   var url = "http://localhost:8080/getSensesData";
   var reqData = {range: range, buttonStats: buttonStats};
   var status = communicateWithTheServer(url,JSON.stringify(reqData), handleSensesData);
+}
+
+function getBatterydata(){
+  console.log("Get battery data");
+  var url = "http://localhost:8080/battery";
+  var status = communicateWithTheServer(url,"", showBatteryInfo);
 }
 
 function sendLogdata(logdata){
@@ -299,6 +323,7 @@ function ShowMeasuredPressure(inputData) {
 </table>
 
 <center> <font size="1"><div id="visitor"></div></font></center>
+<center> <font size="1"><div id="battery"></div></font></center>
     
 <script>
 // data for the graph
@@ -468,6 +493,7 @@ window.onload = function() {
     $.get("http://ipinfo.io", function(response) {
       sendLogdata(response);
     }, "jsonp");
+    getBatterydata();
     var ctx1 = document.getElementById("myChart1").getContext("2d");
     var ctx2 = document.getElementById("myChart2").getContext("2d");
     var ctx3 = document.getElementById("myChart3").getContext("2d");
