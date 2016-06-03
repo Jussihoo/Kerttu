@@ -27,5 +27,5 @@ ToDo list:
 - implement alarm functionality if the battery level goes below threshold
 - implement facebook and/or twitter connectivity and make Kerttu to tweet or send a Facebook status update whenever a new temperature e.g. record is broken etc.
 
-<bold>Kerttu is currently running in the Amazon cloud</bold>. Try it http://52.34.164.37/Kerttu.html
-Please note however that the service might be down to the R&D purposes. 
+<bold>Kerttu is currently running in the Amazon cloud</bold>. Try it http://52.34.164.37/Kerttu.html (The IP address has 
+changed on 3rd of June as I had to move to a new cloud instance). Please note however that the service might be down to the R&D purposes. 
