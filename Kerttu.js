@@ -4,7 +4,10 @@ var server = restify.createServer({
   name: 'Kerttu',
   version: '1.0.0'
 });
+
+var https = require("https");
 var socketio  = require ("socket.io");
+var config = require ("./config/configuration.js");
 
 // MongoDB
 var MongoClient = require('mongodb').MongoClient;
@@ -20,6 +23,14 @@ server.use(restify.fullResponse());
 // socket
 var io = socketio.listen(server.server);
 
+// Facebook feed
+var counter = 0; // init
+var randomNumber = 1; // init 
+var feedStatus = [];
+feedStatus[0] = "I just stored these measurements into my lovely database. ";
+feedStatus[1] = "Right now the weather here at N61° 29.583 E023° 37.027 is. ";
+feedStatus[2] = "Press like if you like the weather as much as I am ";
+
 var storeSensesData = function(collection,sense, value, timestamp) {
    var senseData = {};
    senseData["time"] = timestamp;
@@ -28,6 +39,29 @@ var storeSensesData = function(collection,sense, value, timestamp) {
       assert.equal(err, null);
       console.log("stored senses data into the database for " + collection + " collection");
   });
+}
+
+function randomize(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function postToFacebook(str, token) {
+  var req = https.request({
+    host: 'graph.facebook.com',
+    path: '/'+config.feedID+'/feed?',
+    method: 'POST'
+  }, function(res) {
+    res.setEncoding('utf8');
+    res.on('data', function(chunk) {
+      console.log('got chunk '+chunk);
+    });
+    res.on('end', function() {
+      console.log('received ack from Facebook');
+    });
+  });
+  req.end('message='+encodeURIComponent(str)
+    +'&access_token='+encodeURIComponent(token));
+  console.log('Sent to Facebook feed');
 }
 
 var sendRes = function(res,items){
@@ -65,7 +99,6 @@ function getChargerdata(res, batteryData, callback) {
   db.collection('charger').find({},{time:1,_id:0}).sort({time:-1}).limit(1).toArray(function(err,item) {
      assert.equal(err, null);
      var charger = false;
-     console.log("patteriaika " + new Date(batteryData.battery.time) + " ja chargeraika" + new Date(item[0].time))
      if (new Date(item[0].time) - new Date(batteryData.battery.time) == 0){ // charger is ON, same timestamp on battery and charger collections
         charger = true;
         console.log("charger is on");
@@ -165,6 +198,21 @@ function handleSenses(senses, time){
         currentBattery = senses[i].val;
         pushData["battery"] = currentBattery;
         storeSensesData("battery", "battery", currentBattery, time);
+        if (currentBattery <15 && currentBattery > 10){
+          // make a Facebook feed post
+          var string = "My battery is running low. Jussi, please do something";
+          postToFacebook(string, config.token);
+        }
+        if (currentBattery <=10 && currentBattery > 5){
+          // make a Facebook feed post
+          var string = "Hey Jussi, I told you to connect that awesome charger to me. What gives?";
+          postToFacebook(string, config.token);
+        }
+        if (currentBattery <=5 ){
+          // make a Facebook feed post
+          var string = "I am moving into bi*ch mode right now if you Jussi do not connect that charger NOW. I am warning you";
+          postToFacebook(string, config.token);
+        }
       }
       else if (senses[i].sId == '0x00030400' ){ // Charger connected data
         console.log("Charger is connected or not" + senses[i].val); // remove this
@@ -172,13 +220,30 @@ function handleSenses(senses, time){
         pushData["charger"] = chargerConnected;
         if (chargerConnected){ // charger is connected, store timestamps into database
           storeSensesData("charger", "chargerOn", chargerConnected, time);
+          // make a Facebook feed post
+          var string = "Oh. Energy. Thanks for charging my battery. I am so happy now that my temperature measurement might go grazy";
+          postToFacebook(string, config.token);
         }
       }
       else{
         console.dir(senses[i]);
       }
     }
-    pushMeasuredData(pushData); // send data to browser  
+    pushMeasuredData(pushData); // send data to browser
+    if (counter == randomNumber){
+      // time to write to the Facebook feed
+      var feedInd = randomize(0, feedStatus.length);
+      var string = feedStatus[feedInd]+"Temperature is "+pushData.temp+" Celsius, humidity reading is "+pushData.humidity+"% and air pressure is" +pushData.pressure+" hPA";
+      postToFacebook(string, config.token);
+      // make a new lottery
+      var min = 6;
+      var max = 30; 
+      randomNumber = randomize(min, max);
+      counter = 0;
+    }
+    else {
+      counter++;
+    } 
 }
 
 function addZero(i) { // adds leading zero to timestamp to get double digit figure
@@ -254,6 +319,8 @@ server.post('/', function (req, res, next) {
 io.sockets.on('connection', function (socket) {
     //wait for client to make a socket connection
     console.log("socket connection has been made");
+    var string = "Oh. Just got a new visitor to my webpage :)";
+    postToFacebook(string, config.token);
 });                              
 
 server.listen(8080, function () {
