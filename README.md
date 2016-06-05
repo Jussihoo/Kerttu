@@ -24,8 +24,11 @@ ToDo list:
 - implement functionality in the node.js to get data from the database for last 24 or so measurements / last 7 days / last / month *DONE*
 - implement alarm functionality for setting alarm when the temperature crossed a certain threshold and then sending the alarm via e-mail
 - implement functionality and REST APIs to get the battery level of the Thingsee One and to display it on the web page.  *DONE
-- implement alarm functionality if the battery level goes below threshold
-- implement facebook and/or twitter connectivity and make Kerttu to tweet or send a Facebook status update whenever a new temperature e.g. record is broken etc.
+- implement alarm functionality if the battery level goes below threshold *DONE by Facebook status update*
+- implement facebook connectivity and make Kerttu to send a Facebook status update whenever a new temperature e.g. record is broken etc. *basic implementation DONE*
+- implement twitter connectivity and make Kerttu to tweet whenever a new temperature e.g. record is broken etc.
 
 <bold>Kerttu is currently running in the Amazon cloud</bold>. Try it http://52.40.178.62/Kerttu.html (The IP address has 
-changed on 3rd of June as I had to move to a new cloud instance). Please note however that the service might be down to the R&D purposes. 
+changed on 3rd of June as I had to move to a new cloud instance). Please note however that the service might be down to the R&D purposes.
+
+Kerttu has it's own Facebook page: https://www.facebook.com/WeatherstationKerttu/ 

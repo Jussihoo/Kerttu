@@ -25,11 +25,29 @@ var io = socketio.listen(server.server);
 
 // Facebook feed
 var counter = 0; // init
-var randomNumber = 1; // init 
+var randomNumber = 6; // init
+var batInd1 = true; // init
+var batInd2 = true; // init
+var batInd3 = true; // init
+var chargerInd = true; // init
 var feedStatus = [];
 feedStatus[0] = "I just stored these measurements into my lovely database. ";
-feedStatus[1] = "Right now the weather here at N61° 29.583 E023° 37.027 is. ";
-feedStatus[2] = "Press like if you like the weather as much as I am ";
+feedStatus[1] = "Right now the weather here https://goo.gl/maps/FKxoaFKajc52 looks like this. ";
+feedStatus[2] = "Press like if you like the weather as much as I am. ";
+feedStatus[3] = "Wherever you go, no matter what the weather, always bring your own sunshine. ";
+feedStatus[4] = "There's no such thing as bad weather, just soft people. ";
+feedStatus[5] = "A lot of people like snow. I find it to be an unnecessary freezing of water. ";
+feedStatus[6] = "I cannot command winds and weather but I can show you some measurements. ";
+feedStatus[7] = "Kyl o komee keli. ";
+feedStatus[8] = "Anyone who says sunshine brings happiness has never danced in the rain. ";
+feedStatus[9] = "Some people feel the rain — others just get wet. ";
+feedStatus[10] = "There is no such thing as bad weather, only different kinds of good weather. ";
+feedStatus[11] = "Bad weather always looks worse through a window. ";
+feedStatus[12] = "I like the cold weather. It means you get work done. ";
+feedStatus[13] = "The weather is like the government, always in the wrong. ";
+feedStatus[14] = "You need a web developer? Hire Jussi? https://fi.linkedin.com/in/juhani-hakosalo-18743711b ."
+feedStatus[15] = "I wrote a piece of software in 1998 that created fictional weather. ";
+
 
 var storeSensesData = function(collection,sense, value, timestamp) {
    var senseData = {};
@@ -59,7 +77,7 @@ function postToFacebook(str, token) {
       console.log('received ack from Facebook');
     });
   });
-  req.end('message='+encodeURIComponent(str)
+  req.end('message='+str
     +'&access_token='+encodeURIComponent(token));
   console.log('Sent to Facebook feed');
 }
@@ -137,7 +155,12 @@ function getHumidityData(range, res, samples, callback){
     db.collection('humidity').find({time: {$gte: new Date(new Date().setHours(new Date().getHours()-range))}},{time:1, humidity:1, _id:0}).sort({ time: 1 }).toArray(function(err,items){ // get the samples from database
            assert.equal(err, null);
            //console.dir(items); // remove this
-           samples.humidity = items; 
+           if (range > 48){ // filter out every other item to optimize graph drawing
+              for(var i = 0; i < items.length-1; i++) {
+                items.splice(i+1,1); // remove every other item from the list
+              }
+           }
+           samples.humidity = items;
            callback(res, samples); // once all items read from database (asynchronous call), call the callback function and send the response        
     });
 };
@@ -146,6 +169,11 @@ function getPressureData(range, res, samples, callback){
     db.collection('pressure').find({time: {$gte: new Date(new Date().setHours(new Date().getHours()-range))}},{time:1, pressure:1, _id:0}).sort({ time: 1 }).toArray(function(err,items){ // get the samples from database
            assert.equal(err, null);
            //console.dir(items); // remove this
+           if (range > 48){ // filter out every other item to optimize graph drawing
+              for(var i = 0; i < items.length-1; i++) {
+                items.splice(i+1,1); // remove every other item from the list
+              }
+           }
            samples.pressure = items; 
            callback( range, res, samples, sendRes); // once all items read from database (asynchronous call), call the callback function and get the humidity data        
     });
@@ -157,7 +185,12 @@ function getTempData(range, res,callback){
     db.collection('temperature').find({time: {$gte: new Date(new Date().setHours(new Date().getHours()-range))}},{time:1, temp:1, _id:0}).sort({ time: 1 }).toArray(function(err,items){ // get the samples from database
            assert.equal(err, null);
            //console.dir(items); // remove this
-           samples.temperature = items; 
+           if (range > 48){ // filter out every other item to optimize graph drawing
+              for(var i = 0; i < items.length-1; i++) {
+                items.splice(i+1,1); // remove every other item from the list
+              }
+           }
+           samples.temperature = items;
            callback( range, res, samples, getHumidityData); // once all items read from database (asynchronous call), call the callback function and get the pressure data        
     });
 };
@@ -198,20 +231,23 @@ function handleSenses(senses, time){
         currentBattery = senses[i].val;
         pushData["battery"] = currentBattery;
         storeSensesData("battery", "battery", currentBattery, time);
-        if (currentBattery <15 && currentBattery > 10){
+        if (currentBattery <15 && currentBattery > 10 && batInd1){
           // make a Facebook feed post
           var string = "My battery is running low. Jussi, please do something";
           postToFacebook(string, config.token);
+          batInd1 = false;
         }
-        if (currentBattery <=10 && currentBattery > 5){
+        if (currentBattery <=10 && currentBattery > 5 && batInd2){
           // make a Facebook feed post
           var string = "Hey Jussi, I told you to connect that awesome charger to me. What gives?";
           postToFacebook(string, config.token);
+          batInd2 = false;
         }
-        if (currentBattery <=5 ){
+        if (currentBattery <=5 && batInd3 ){
           // make a Facebook feed post
           var string = "I am moving into bi*ch mode right now if you Jussi do not connect that charger NOW. I am warning you";
           postToFacebook(string, config.token);
+          batInd3 = false;
         }
       }
       else if (senses[i].sId == '0x00030400' ){ // Charger connected data
@@ -220,9 +256,18 @@ function handleSenses(senses, time){
         pushData["charger"] = chargerConnected;
         if (chargerConnected){ // charger is connected, store timestamps into database
           storeSensesData("charger", "chargerOn", chargerConnected, time);
-          // make a Facebook feed post
-          var string = "Oh. Energy. Thanks for charging my battery. I am so happy now that my temperature measurement might go grazy";
-          postToFacebook(string, config.token);
+          if (chargerInd){
+            // make a Facebook feed post
+            var string = "Oh. Energy. Thanks for charging my battery. I am so happy now that my temperature measurement might go grazy";
+            postToFacebook(string, config.token);
+            chargerInd = false;
+            batInd1 = true;
+            batInd2 = true;
+            batInd3 = true;
+          }
+        }
+        else { // charger not connected
+           chargerInd = true;
         }
       }
       else{
@@ -232,12 +277,12 @@ function handleSenses(senses, time){
     pushMeasuredData(pushData); // send data to browser
     if (counter == randomNumber){
       // time to write to the Facebook feed
-      var feedInd = randomize(0, feedStatus.length);
-      var string = feedStatus[feedInd]+"Temperature is "+pushData.temp+" Celsius, humidity reading is "+pushData.humidity+"% and air pressure is" +pushData.pressure+" hPA";
+      var feedInd = randomize(0, feedStatus.length-1);
+      var string = feedStatus[feedInd]+"Temperature is "+pushData.temp+" Celsius, humidity reading is "+pushData.humidity+"% and air pressure is " +pushData.pressure+" hPA";
       postToFacebook(string, config.token);
       // make a new lottery
-      var min = 6;
-      var max = 30; 
+      var min = 6*12; // 12 hours
+      var max = 6*24; // 24 hours
       randomNumber = randomize(min, max);
       counter = 0;
     }
@@ -319,8 +364,8 @@ server.post('/', function (req, res, next) {
 io.sockets.on('connection', function (socket) {
     //wait for client to make a socket connection
     console.log("socket connection has been made");
-    var string = "Oh. Just got a new visitor to my webpage :)";
-    postToFacebook(string, config.token);
+    //var string = "Oh. Just got a new visitor to my webpage :)";
+    //postToFacebook(string, config.token);
 });                              
 
 server.listen(8080, function () {

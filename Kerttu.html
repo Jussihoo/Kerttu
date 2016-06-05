@@ -16,23 +16,27 @@ socket.on('PushData', function (data) {
     var tempData =     {}; // init
     var pressureData = {}; // init
     var humidityData = {}; // init
+    var inputData = []; // init
     
     // handle temperature data
     tempData["temp"] = allData.temp;
     tempData["time"] = allData.time;
-    ShowMeasuredTemp(tempData);
+    inputData[0] = tempData;
+    ShowMeasuredTemp(inputData);
     window.myLine1.update();
     
     // handle humidity data
     humidityData["humidity"] = allData.humidity;
     humidityData["time"]     = allData.time;
-    ShowMeasuredHumidity(humidityData);
+    inputData[0] = humidityData;
+    ShowMeasuredHumidity(inputData);
     window.myLine2.update();
     
     // handle pressure data
     pressureData["pressure"] = allData.pressure;
     pressureData["time"]     = allData.time;
-    ShowMeasuredPressure(pressureData);
+    inputData[0] = pressureData;
+    ShowMeasuredPressure(inputData);
     window.myLine3.update();
     
     // handle battery data
@@ -57,27 +61,21 @@ function handleSensesData(client){
   if (tempSampleLength <72){
     tempSampleLength = 72; 
   } 
-  for (var i=0; i<senseData.temperature.length;i++) {
-    ShowMeasuredTemp(senseData.temperature[i]);
-  }
+  ShowMeasuredTemp(senseData.temperature);
   window.myLine1.update();
   // handle humidity
   humiditySampleLength = senseData.humidity.length;
   if (humiditySampleLength <72){
     humiditySampleLength = 72; 
-  } 
-  for (var i=0; i<senseData.humidity.length;i++) {
-    ShowMeasuredHumidity(senseData.humidity[i]);
   }
+  ShowMeasuredHumidity(senseData.humidity); 
   window.myLine2.update();
   // handle pressure
   pressureSampleLength = senseData.pressure.length;
   if (pressureSampleLength <72){
     pressureSampleLength = 72; 
   } 
-  for (var i=0; i<senseData.pressure.length;i++) {
-    ShowMeasuredPressure(senseData.pressure[i]);
-  }
+  ShowMeasuredPressure(senseData.pressure);
   window.myLine3.update();
   
 }
@@ -139,114 +137,94 @@ function sendLogdata(logdata){
 function clearGraphData(){
   //temperature graph
   config1.data.labels.splice(0, config1.data.labels.length); // remove all timestamps from label
-  config1.data.datasets.forEach(function(dataset, datasetIndex) {
-      dataset.data.splice(0, dataset.data.length); // remove all data samples
-  });
+  config1.data.datasets[0].data.splice(0, config1.data.datasets[0].data.length); // remove all data samples
   //humidity graph
   config2.data.labels.splice(0, config2.data.labels.length); // remove all timestamps from label
-  config2.data.datasets.forEach(function(dataset, datasetIndex) {
-      dataset.data.splice(0, dataset.data.length); // remove all data samples
-  });
+  config2.data.datasets[0].data.splice(0, config2.data.datasets[0].data.length); // remove all data samples
   //pressure graph
   config3.data.labels.splice(0, config3.data.labels.length); // remove all timestamps from label
-  config3.data.datasets.forEach(function(dataset, datasetIndex) {
-      dataset.data.splice(0, dataset.data.length); // remove all data samples
-  });  
+  config3.data.datasets[0].data.splice(0, config3.data.datasets[0].data.length); // remove all data samples 
 }
 
 function ShowMeasuredTemp(inputData) {
-   
-  var temperature = inputData.temp;
+  var temperature = 0; //init 
   var options = {weekday: "short", hour: "2-digit", minute: "2-digit"};
-  var time   = new Date(inputData.time);
-  var timestamp = time.toLocaleString([],options);
-  document.getElementById("temp").innerHTML = temperature;
+  var time   = 0; // init
+  var timestamp = 0; // init
+  config1.data.datasets[0].pointRadius = 0;
   
-  if (config1.data.datasets.length > 0) {
-      config1.data.labels.push(timestamp);   // store the timestamp from node.js server as x-axis label
-      $.each(config1.data.datasets, function(i, dataset) {
-          dataset.data.push(temperature); 
-      });
+  for(i=0;i<inputData.length;i++){
+    temperature = inputData[i].temp;
+    time = new Date(inputData[i].time);
+    timestamp = time.toLocaleString(['en-GB'],options);
+    
+    config1.data.labels.push(timestamp);   // store the timestamp from node.js server as x-axis label
+    config1.data.datasets[0].data.push(temperature);
+    if (temperature < 0) { // it's freezing out there
+      pointColor = "rgba(58,55,250,1)"; // blue
+    }
+    else {
+      pointColor = "rgba(250,10,10,1)"; // red
+    }
+    config1.data.datasets[0].pointBorderColor.push(pointColor);
+    config1.data.datasets[0].pointBackgroundColor.push(pointColor); 
   }
+  document.getElementById("temp").innerHTML = temperature;
   if (config1.data.labels.length > tempSampleLength ) {  // measurement sample upper boundary exceeded, remove the oldest sample
       config1.data.labels.splice(0, 1); // remove the first timestamp from label
-      config1.data.datasets.forEach(function(dataset, datasetIndex) {
-            dataset.data.shift(); // remove the first data sample as well
-        });
+      config1.data.datasets[0].data.shift(); // remove the first data sample as well
   }
-  if (temperature < 0) { // it's freezing out there
-    pointColor = "rgba(58,55,250,1)"; // blue
-  }
-  else {
-    pointColor = "rgba(250,10,10,1)"; // red
-  }
-  config1.data.datasets.forEach(function(dataset, datasetIndex) {
-    //dataset.borderColor = "rgba(2,2,1,1)";
-    //dataset.backgroundColor = pointColor;
-    dataset.pointBorderColor.push(pointColor);
-    dataset.pointBackgroundColor.push(pointColor);
-    dataset.pointRadius = 0;
-  });
 }
 
 function ShowMeasuredHumidity(inputData) {
    
-  var humidity = inputData.humidity;
+  var humidity = 0; // init
   var options = {weekday: "short", hour: "2-digit", minute: "2-digit"};
-  var time   = new Date(inputData.time);
-  var timestamp = time.toLocaleString([],options);
-  //document.getElementById("temp").innerHTML = temperature;
+  var time   = 0; // init
+  var timestamp = 0; // init
+  pointColor = "rgba(250,10,10,1)"; // red
+  config2.data.datasets[0].pointRadius = 0;
   
-  if (config2.data.datasets.length > 0) {
-      config2.data.labels.push(timestamp);   // store the timestamp from node.js server as x-axis label
-      $.each(config2.data.datasets, function(i, dataset) {
-          dataset.data.push(humidity); 
-      });
+  for(i=0;i<inputData.length;i++){
+    humidity = inputData[i].humidity;
+    time = new Date(inputData[i].time);
+    timestamp = time.toLocaleString(['en-GB'],options);
+    
+    config2.data.labels.push(timestamp);   // store the timestamp from node.js server as x-axis label
+    config2.data.datasets[0].data.push(humidity);
+    config2.data.datasets[0].pointBorderColor.push(pointColor);
+    config2.data.datasets[0].pointBackgroundColor.push(pointColor);
   }
   if (config2.data.labels.length > humiditySampleLength ) {  // measurement sample upper boundary exceeded, remove the oldest sample
-      config2.data.labels.splice(0, 1); // remove the first timestamp from label
-      config2.data.datasets.forEach(function(dataset, datasetIndex) {
-            dataset.data.shift(); // remove the first data sample as well
-        });
+    config2.data.labels.splice(0, 1); // remove the first timestamp from label
+    config2.data.datasets[0].data.shift(); // remove the first data sample as well
   }
-  pointColor = "rgba(250,10,10,1)"; // red
-  config2.data.datasets.forEach(function(dataset, datasetIndex) {
-    //dataset.borderColor = "rgba(2,2,1,1)";
-    //dataset.backgroundColor = pointColor;
-    dataset.pointBorderColor.push(pointColor);
-    dataset.pointBackgroundColor.push(pointColor);
-    dataset.pointRadius = 0;
-  });
 }
 
 function ShowMeasuredPressure(inputData) {
    
-  var pressure = inputData.pressure;
+  var pressure = 0; // init
   var options = {weekday: "short", hour: "2-digit", minute: "2-digit"};
-  var time   = new Date(inputData.time);
-  var timestamp = time.toLocaleString(['en-GB'],options);
-  //document.getElementById("temp").innerHTML = temperature;
+  var time   = 0; // init
+  var timestamp = 0; // init
+  pointColor = "rgba(250,10,10,1)"; // red
+  config3.data.datasets[0].pointRadius = 0;
+
   
-  if (config3.data.datasets.length > 0) {
-      config3.data.labels.push(timestamp);   // store the timestamp from node.js server as x-axis label
-      $.each(config3.data.datasets, function(i, dataset) {
-          dataset.data.push(pressure); 
-      });
+  for(i=0;i<inputData.length;i++){
+    pressure = inputData[i].pressure;
+    time = new Date(inputData[i].time);
+    timestamp = time.toLocaleString(['en-GB'],options);
+    
+    config3.data.labels.push(timestamp);   // store the timestamp from node.js server as x-axis label
+    config3.data.datasets[0].data.push(pressure);
+    config3.data.datasets[0].pointBorderColor.push(pointColor);
+    config3.data.datasets[0].pointBackgroundColor.push(pointColor);
   }
   if (config3.data.labels.length > pressureSampleLength ) {  // measurement sample upper boundary exceeded, remove the oldest sample
-      config3.data.labels.splice(0, 1); // remove the first timestamp from label
-      config3.data.datasets.forEach(function(dataset, datasetIndex) {
-            dataset.data.shift(); // remove the first data sample as well
-        });
+    config3.data.labels.splice(0, 1); // remove the first timestamp from label
+    config3.data.datasets[0].data.shift(); // remove the first data sample as well
   }
-  pointColor = "rgba(250,10,10,1)"; // red
-  config3.data.datasets.forEach(function(dataset, datasetIndex) {
-    //dataset.borderColor = "rgba(2,2,1,1)";
-    //dataset.backgroundColor = pointColor;
-    dataset.pointBorderColor.push(pointColor);
-    dataset.pointBackgroundColor.push(pointColor);
-    dataset.pointRadius = 0;
-  });
 }
 </script>
 
