@@ -209,20 +209,20 @@ function handleSenses(senses, time){
     for (var i=0; i<senses.length; i++){ // go through all the senses data
       if (senses[i].sId == '0x00060100' ){ // temperature data
         console.log("The measured temperature is " + senses[i].val); // remove this
-        currentTemp = senses[i].val;
+        currentTemp = Math.round( senses[i].val * 10 ) / 10; // rounding with one decimal
         pushData["temp"] = currentTemp;
         pushData["time"] = time;
         storeSensesData("temperature", "temp", currentTemp, time);   
       }
       else if (senses[i].sId == '0x00060200' ){ // Humidity data
         console.log("The measured Humidity is " + senses[i].val); // remove this
-        currentHumidity = senses[i].val;
+        currentHumidity = Math.round( senses[i].val * 10 ) / 10; // rounding with one decimal
         pushData["humidity"] = currentHumidity;
         storeSensesData("humidity", "humidity", currentHumidity, time);   
       }
       else if (senses[i].sId == '0x00060400' ){ // Air pressure data
         console.log("The measured Air pressure is " + senses[i].val); // remove this
-        currentPressure = senses[i].val;
+        currentPressure = Math.round( senses[i].val * 10 ) / 10; // rounding with one decimal
         pushData["pressure"] = currentPressure;
         storeSensesData("pressure", "pressure", currentPressure, time);  
       }
