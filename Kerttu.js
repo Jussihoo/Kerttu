@@ -40,14 +40,16 @@ feedStatus[5] = "A lot of people like snow. I find it to be an unnecessary freez
 feedStatus[6] = "I cannot command winds and weather but I can show you some measurements. ";
 feedStatus[7] = "Kyl o komee keli. ";
 feedStatus[8] = "Anyone who says sunshine brings happiness has never danced in the rain. ";
-feedStatus[9] = "Some people feel the rain — others just get wet. ";
+feedStatus[9] = "Some people feel the rain, others just get wet. ";
 feedStatus[10] = "There is no such thing as bad weather, only different kinds of good weather. ";
 feedStatus[11] = "Bad weather always looks worse through a window. ";
 feedStatus[12] = "I like the cold weather. It means you get work done. ";
 feedStatus[13] = "The weather is like the government, always in the wrong. ";
-feedStatus[14] = "You need a web developer? Hire Jussi? https://fi.linkedin.com/in/juhani-hakosalo-18743711b ."
-feedStatus[15] = "I wrote a piece of software in 1998 that created fictional weather. ";
+feedStatus[14] = "I wrote a piece of software in 1998 that created fictional weather. ";
 
+// timer inits
+var timerId = 0; // init
+var offlineWarningGiven = false;
 
 var storeSensesData = function(collection,sense, value, timestamp) {
    var senseData = {};
@@ -57,6 +59,15 @@ var storeSensesData = function(collection,sense, value, timestamp) {
       assert.equal(err, null);
       console.log("stored senses data into the database for " + collection + " collection");
   });
+}
+
+function timerExpired(){
+  console.log("Thingsee IOT device is offline or sending failed");
+  if (!offlineWarningGiven){ // give the warning only once and not spam the facebook feed
+    var string = "I am sorry I can't show you new measurements as the IOT device is offline";
+    postToFacebook(string, config.token);
+    offlineWarningGiven = true;
+  }
 }
 
 function randomize(min, max) {
@@ -307,6 +318,9 @@ MongoClient.connect(url, function(err, database) {
   console.log("Connected correctly to the database.");
 });
 
+// start a timer on nodejs start-up to check if the Thingsee is sending a measurement within 10 minutes
+var timerId = setTimeout(timerExpired, 10*60*1000); 
+
 //REST API implementation for getting the initial temperature data to be shown in the UI
 server.post('/getSensesData', function (req, res, next) {
     if (req.params.buttonStats){ // button has been pressed, store stats into database
@@ -354,7 +368,16 @@ server.post('/', function (req, res, next) {
     var consoleTime = hh + ":" + mm + ":" + ss; 
     
     console.log('got IOT message from Lutikka. Timestamp ' + consoleTime); // remove this
+    if (timerId != 0){
+      clearTimeout(timerId); // stop the timer, Thingsee is online
+      timerId = setTimeout(timerExpired, 10*60*1000+5000); // set a new timer with 10 minutes and 5 seconds 
+    }
     handleSenses(req.params[0].senses, time);
+    if (offlineWarningGiven){ // Thingsee IOT device has been offline for a while
+      offlineWarningGiven = false;
+      var string = "The IOT device is back online. Measurements are being stored again.";
+      postToFacebook(string, config.token);  
+    }
 
     res.send(Number(200)); // sen reply, otherwise Thingsee does not send next measurement normally
     next();

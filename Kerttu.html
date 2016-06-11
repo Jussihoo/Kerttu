@@ -12,6 +12,10 @@
 var socket = io("http://localhost:8080"); 
 socket.on('PushData', function (data) {
     console.log("got senses data from socket");
+    clearTimeout(timerId); // stop the timer, Thingsee is online
+    timerId = setTimeout(timerExpired, 10*60*1000+5000); // set a new timer with 10 minutes and 5 seconds
+    document.getElementById("status").innerHTML = "IOT Device and nodejs server are online";
+    
     var allData = JSON.parse(data);      
     var tempData =     {}; // init
     var pressureData = {}; // init
@@ -48,6 +52,11 @@ socket.on('PushData', function (data) {
     
 });
 
+var timerId = 0; // init
+function timerExpired(){
+  console.log("Thingsee IOT device or nodejs server is offline or sending failed");
+  document.getElementById("status").innerHTML = "IOT Device or nodejs server is offline";
+}
 
 var tempSampleLength = 72; // init as 6 measurements per hour and 12 hours
 var humiditySampleLength = 72; // init as 6 measurements per hour and 12 hours
@@ -302,6 +311,7 @@ function ShowMeasuredPressure(inputData) {
 
 <center> <font size="1"><div id="visitor"></div></font></center>
 <center> <font size="1"><div id="battery"></div></font></center>
+<center> <font size="1"><div id="status"></div></font></center>
     
 <script>
 // data for the graph
@@ -479,6 +489,7 @@ window.onload = function() {
     window.myLine2 = new Chart(ctx2, config2);
     window.myLine3 = new Chart(ctx3, config3);
     getSensesData(12,false);// get recorded measurements from the database
+    timerId = setTimeout(timerExpired, 10*60*1000+5000); // set a new timer with 10 minutes and 5 seconds
 };
 document.getElementById("temp").innerHTML = "---"; // init
 </script>
