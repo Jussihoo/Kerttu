@@ -318,8 +318,8 @@ MongoClient.connect(url, function(err, database) {
   console.log("Connected correctly to the database.");
 });
 
-// start a timer on nodejs start-up to check if the Thingsee is sending a measurement within 10 minutes
-var timerId = setTimeout(timerExpired, 10*60*1000); 
+// start a timer on nodejs start-up to check if the Thingsee is sending a measurement within 11 minutes
+var timerId = setTimeout(timerExpired, 11*60*1000); 
 
 //REST API implementation for getting the initial temperature data to be shown in the UI
 server.post('/getSensesData', function (req, res, next) {
@@ -370,7 +370,7 @@ server.post('/', function (req, res, next) {
     console.log('got IOT message from Lutikka. Timestamp ' + consoleTime); // remove this
     if (timerId != 0){
       clearTimeout(timerId); // stop the timer, Thingsee is online
-      timerId = setTimeout(timerExpired, 10*60*1000+5000); // set a new timer with 10 minutes and 5 seconds 
+      timerId = setTimeout(timerExpired, 30*60*1000); // set a new timer with 30 minutes 
     }
     handleSenses(req.params[0].senses, time);
     if (offlineWarningGiven){ // Thingsee IOT device has been offline for a while
