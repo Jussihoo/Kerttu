@@ -147,6 +147,8 @@ function clearGraphData(){
   //temperature graph
   config1.data.labels.splice(0, config1.data.labels.length); // remove all timestamps from label
   config1.data.datasets[0].data.splice(0, config1.data.datasets[0].data.length); // remove all data samples
+  config1.data.datasets[0].pointBorderColor.splice(0, config1.data.datasets[0].pointBorderColor.length); // remove all colored points
+  config1.data.datasets[0].pointBackgroundColor.splice(0, config1.data.datasets[0].pointBackgroundColor.length); // remove all colored points
   //humidity graph
   config2.data.labels.splice(0, config2.data.labels.length); // remove all timestamps from label
   config2.data.datasets[0].data.splice(0, config2.data.datasets[0].data.length); // remove all data samples
@@ -182,6 +184,8 @@ function ShowMeasuredTemp(inputData) {
   if (config1.data.labels.length > tempSampleLength ) {  // measurement sample upper boundary exceeded, remove the oldest sample
       config1.data.labels.splice(0, 1); // remove the first timestamp from label
       config1.data.datasets[0].data.shift(); // remove the first data sample as well
+      config1.data.datasets[0].pointBackgroundColor.shift(); // Remove the first color point
+      config1.data.datasets[0].pointBackgroundColor.shift(); // Remove the first color point
   }
 }
 
@@ -191,7 +195,6 @@ function ShowMeasuredHumidity(inputData) {
   var options = {weekday: "short", hour: "2-digit", minute: "2-digit"};
   var time   = 0; // init
   var timestamp = 0; // init
-  pointColor = "rgba(250,10,10,1)"; // red
   config2.data.datasets[0].pointRadius = 0;
   
   for(i=0;i<inputData.length;i++){
@@ -201,8 +204,6 @@ function ShowMeasuredHumidity(inputData) {
     
     config2.data.labels.push(timestamp);   // store the timestamp from node.js server as x-axis label
     config2.data.datasets[0].data.push(humidity);
-    config2.data.datasets[0].pointBorderColor.push(pointColor);
-    config2.data.datasets[0].pointBackgroundColor.push(pointColor);
   }
   if (config2.data.labels.length > humiditySampleLength ) {  // measurement sample upper boundary exceeded, remove the oldest sample
     config2.data.labels.splice(0, 1); // remove the first timestamp from label
@@ -216,7 +217,6 @@ function ShowMeasuredPressure(inputData) {
   var options = {weekday: "short", hour: "2-digit", minute: "2-digit"};
   var time   = 0; // init
   var timestamp = 0; // init
-  pointColor = "rgba(250,10,10,1)"; // red
   config3.data.datasets[0].pointRadius = 0;
 
   
@@ -227,8 +227,6 @@ function ShowMeasuredPressure(inputData) {
     
     config3.data.labels.push(timestamp);   // store the timestamp from node.js server as x-axis label
     config3.data.datasets[0].data.push(pressure);
-    config3.data.datasets[0].pointBorderColor.push(pointColor);
-    config3.data.datasets[0].pointBackgroundColor.push(pointColor);
   }
   if (config3.data.labels.length > pressureSampleLength ) {  // measurement sample upper boundary exceeded, remove the oldest sample
     config3.data.labels.splice(0, 1); // remove the first timestamp from label
@@ -375,8 +373,8 @@ var config2 = {
         labels: [],
         datasets: [{
             label: "Humidity",
-            pointBorderColor: [],
-            pointBackgroundColor: [],
+            pointBorderColor: "rgba(250,10,10,1)", // red
+            pointBackgroundColor: "rgba(250,10,10,1)", // red
             pointStyle: "circle",
             pointBorderWidth: 0,
             pointRadius: 0,
@@ -428,8 +426,8 @@ var config3 = {
         labels: [],
         datasets: [{
             label: "Pressure",
-            pointBorderColor: [],
-            pointBackgroundColor: [],
+            pointBorderColor: "rgba(250,10,10,1)", // red
+            pointBackgroundColor: "rgba(250,10,10,1)", // red
             pointStyle: "circle",
             pointBorderWidth: 0,
             pointRadius: 0,
